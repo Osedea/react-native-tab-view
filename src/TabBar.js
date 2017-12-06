@@ -34,6 +34,7 @@ type ScrollEvent = {
 
 type Props<T> = SceneRendererProps<T> & {
   scrollEnabled?: boolean,
+  gestureScrollEnabled?: boolean,
   pressColor?: string,
   pressOpacity?: number,
   getLabelText: (scene: Scene<T>) => ?string,
@@ -61,6 +62,7 @@ export default class TabBar<T: Route<*>> extends React.PureComponent<
   static propTypes = {
     ...SceneRendererPropType,
     scrollEnabled: PropTypes.bool,
+    gestureScrollEnabled: PropTypes.bool,
     pressColor: TouchableItem.propTypes.pressColor,
     pressOpacity: TouchableItem.propTypes.pressOpacity,
     getLabelText: PropTypes.func,
@@ -114,6 +116,16 @@ export default class TabBar<T: Route<*>> extends React.PureComponent<
   componentWillReceiveProps(nextProps: Props<T>) {
     if (this.props.navigationState !== nextProps.navigationState) {
       this._resetScrollOffset(nextProps);
+    }
+
+    // We pushed a new route at the beginning and update the index accordingly
+    // Move to the new position of the tab without animation
+    const unshiftRoute =
+      this.props.navigationState.routes[0] &&
+      nextProps.navigationState.routes[1] &&
+      this.props.navigationState.routes[0].key === nextProps.navigationState.routes[1].key;
+    if (unshiftRoute) {
+        this.props.position.setValue(nextProps.navigationState.index);
     }
 
     const nextTabWidth = this._getTabWidthFromStyle(nextProps.tabStyle);
@@ -326,7 +338,7 @@ export default class TabBar<T: Route<*>> extends React.PureComponent<
   _setRef = (el: ?ScrollView) => (this._scrollView = el);
 
   render() {
-    const { position, navigationState, scrollEnabled } = this.props;
+    const { position, navigationState, scrollEnabled, gestureScrollEnabled } = this.props;
     const { routes, index } = navigationState;
     const maxDistance = this._getMaxScrollableDistance(this.props);
     const finalTabWidth = this._getFinalTabWidth(this.props);
@@ -370,7 +382,7 @@ export default class TabBar<T: Route<*>> extends React.PureComponent<
           <ScrollView
             horizontal
             keyboardShouldPersistTaps="always"
-            scrollEnabled={scrollEnabled}
+            scrollEnabled={scrollEnabled && gestureScrollEnabled}
             bounces={false}
             alwaysBounceHorizontal={false}
             scrollsToTop={false}

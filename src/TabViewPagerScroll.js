@@ -66,7 +66,14 @@ export default class TabViewPagerScroll<T: Route<*>> extends React.Component<
         Platform.OS === 'android' ||
         prevProps.navigationState !== this.props.navigationState
       ) {
-        global.requestAnimationFrame(() => this._scrollTo(amount));
+        global.requestAnimationFrame(() => {
+          // No animation if we just pushed a new route at the begining
+          const unshiftRoute =
+            prevProps.navigationState.routes[0] &&
+            this.props.navigationState.routes[1] &&
+            prevProps.navigationState.routes[0].key === this.props.navigationState.routes[1].key;
+          this._scrollTo(amount, !unshiftRoute)
+        });
       } else {
         this._scrollTo(amount, false);
       }
